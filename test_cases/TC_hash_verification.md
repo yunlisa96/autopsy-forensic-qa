@@ -1,27 +1,85 @@
 # TC_HASH - 파일 무결성 검증
 
-## 테스트 목적
-포렌식 증거 파일의 해시값이 Autopsy와 Python에서 동일하게 계산되는지 교차 검증
+## 개요
+NIST CFReDS Hacking Case(SCHARDT) 포렌식 이미지의 무결성을
+NIST 공식 LOG 파일 기준으로 검증한다.
+포렌식 증거물은 수집 이후 변조되지 않았음을 해시값으로 증명해야 하며,
+이를 Python으로 자동화하여 검증한다.
 
-## 관련 기능
-GMDSOFT MD-RED - Data Source Integrity
+---
 
-## 테스트 환경
-- OS: Windows 10
-- Tool: Autopsy 4.23.1
-- Image: SCHARDT.001~005 (NIST CFReDS Hacking Case)
-- Python: 3.9.6
+## 핵심 TC
 
-## 테스트 케이스
+### TC-HASH-001: 전체 이미지 무결성 검증
+
+**목적**
+8개 분할 파일을 합친 전체 이미지의 MD5가
+다른 포렌식 연구자들이 검증한 공식값과 일치하는지 확인
+
+**전제조건**
+- SCHARDT.001 ~ SCHARDT.008 파일이 로컬에 존재
+- NIST SCHARDT.LOG 파일 확인 완료
+
+**테스트 절차**
+1. Python으로 8개 파일을 순서대로 읽어서 MD5 계산
+2. 공식적으로 알려진 전체 이미지 MD5값과 비교
+3. 일치 여부 확인
+
+**기대 결과**
+MD5: aee4fcd9301c03b3b054623ca261959a
+
+**실제 결과**
+MD5: aee4fcd9301c03b3b054623ca261959a
+
+**상태** ✅ PASS
+
+**비고**
+2004년 수사 당시 수집된 이미지가 현재까지 변조되지 않았음을 확인.
+포렌식 증거물로서의 무결성 유지 확인.
+
+---
+
+### TC-HASH-002: 분할 파일 누락 감지
+
+**목적**
+8개 중 일부 파일만 있을 때 전체 이미지와
+해시값이 달라지는지 확인하여 누락 감지 가능성 검증
+
+**전제조건**
+- SCHARDT.001 ~ SCHARDT.005 파일만 존재하는 상황 가정
+
+**테스트 절차**
+1. Python으로 5개 파일만 MD5 계산
+2. 전체 이미지(8개) MD5와 비교
+3. 불일치 확인
+
+**기대 결과**
+5개 파일 MD5 ≠ 전체 이미지 MD5
+
+**실제 결과**
+5개: 4b206f734d857c72654abad73e435a33
+전체: aee4fcd9301c03b3b054623ca261959a
+→ 불일치 확인
+
+**상태** ✅ PASS
+
+**비고**
+분할 파일 누락 시 해시값이 달라짐을 확인.
+Autopsy에 누락된 파일만 넣었을 때 경고 없이 분석 진행되는 것은
+별도 버그 리포트로 기록 필요.
+
+---
+
+## 나머지 TC (분할 파일 개별 검증)
 
 | TC ID | 테스트 항목 | 입력값 | 기대 결과 | 실제 결과 | 상태 |
 |---|---|---|---|---|---|
-| TC-HASH-001 | 전체 이미지 MD5 교차 검증 | SCHARDT.001~005 | Autopsy와 Python 결과 일치 | 4b206f734d857c72654abad73e435a33 | ✅ PASS |
-| TC-HASH-002 | 전체 이미지 SHA1 교차 검증 | SCHARDT.001~005 | Autopsy와 Python 결과 일치 | 4dbbeb5b5314a71054097569d570f0fcfe244d6b | ✅ PASS |
-| TC-HASH-003 | 전체 이미지 SHA256 교차 검증 | SCHARDT.001~005 | Autopsy와 Python 결과 일치 | a82fb41bb4ec46ab7de185600488882bed1baa268de6174e780f48320dbe9391 | ✅ PASS |
-| TC-HASH-004 | 분할 파일 일부만 계산 시 차이 검증 | SCHARDT.001만 | 전체 이미지 해시와 달라야 함 | 28a9b613d6eefe8a0515ef0a675bdebd (불일치 확인) | ✅ PASS |
-| TC-HASH-005 | 파일 순서 변경 시 해시값 변화 검증 | SCHARDT.005~001 (역순) | 정순과 해시값 달라야 함 | 역순 계산 시 다른 값 반환 확인 | ✅ PASS |
-
-## 결론
-Autopsy와 Python이 동일한 해시값을 계산함을 확인.
-SCHARDT 이미지는 변조되지 않은 상태임이 두 툴 모두에서 검증됨.
+| TC-HASH-003 | SCHARDT.001 개별 무결성 | SCHARDT.001 | 28A9B613... | 28A9B613... | ✅ PASS |
+| TC-HASH-004 | SCHARDT.002 개별 무결성 | SCHARDT.002 | C7227E7E... | C7227E7E... | ✅ PASS |
+| TC-HASH-005 | SCHARDT.003 개별 무결성 | SCHARDT.003 | EBBA35AC... | EBBA35AC... | ✅ PASS |
+| TC-HASH-006 | SCHARDT.004 개별 무결성 | SCHARDT.004 | 669B6636... | 669B6636... | ✅ PASS |
+| TC-HASH-007 | SCHARDT.005 개별 무결성 | SCHARDT.005 | C46E5760... | C46E5760... | ✅ PASS |
+| TC-HASH-008 | SCHARDT.006 개별 무결성 | SCHARDT.006 | 99511901... | 99511901... | ✅ PASS |
+| TC-HASH-009 | SCHARDT.007 개별 무결성 | SCHARDT.007 | 99511901... | 99511901... | ✅ PASS |
+| TC-HASH-010 | SCHARDT.008 개별 무결성 | SCHARDT.008 | 8194A79A... | 8194A79A... | ✅ PASS |
+| TC-HASH-011 | 파일 순서 변경 시 해시값 변화 | 역순 입력 | 정순과 다른 값 | 다른 값 확인 | ✅ PASS |
