@@ -50,8 +50,7 @@ def test_partial_image_differs_from_full():
 
 
 def test_file_order_matters():
-    """파일 순서가 바뀌면 해시값도 달라지는지 검증
-    → 수사관이 올바른 순서로 분석해야 함을 증명"""
+    """파일 순서가 바뀌면 해시값도 달라지는지 검증"""
     correct_order = get_hash_multiple_files(SCHARDT_DIR, SCHARDT_FILES, "md5")
     reversed_order = get_hash_multiple_files(SCHARDT_DIR, list(reversed(SCHARDT_FILES)), "md5")
     assert correct_order != reversed_order
