@@ -47,3 +47,10 @@ def test_file_order_matters():
     correct_order = get_hash_multiple_files(SCHARDT_DIR, SCHARDT_FILES, "md5")
     reversed_order = get_hash_multiple_files(SCHARDT_DIR, list(reversed(SCHARDT_FILES)), "md5")
     assert correct_order != reversed_order
+
+def test_tampered_image_detected():
+    """변조된 이미지는 NIST 공식값과 불일치해야 함
+    → 1바이트 변조만으로도 해시값이 달라져 변조가 감지됨을 검증"""
+    tampered_files = ["SCHARDT_tampered.001"] + SCHARDT_FILES[1:]
+    result = get_hash_multiple_files(SCHARDT_DIR, tampered_files, "md5")
+    assert result != AUTOPSY_MD5  # 달라야 PASS (변조 감지됨)
